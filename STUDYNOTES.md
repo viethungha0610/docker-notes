@@ -100,3 +100,15 @@ The CMD instruction has three forms:
 -   `echo "yourSecret" | docker secret create secret_name -`: Creating secrets from typing it out
 -   After *removing/updating* secrets, service containers will be re-created. It is part of the immutable design.
 -   Secrets and Stacks: version needs to be at least 3.1
+
+#### Full App Lifecycle With Compose
+-   Single set of Compose files for:
+    -   Local `docker-compose up` development environment
+    -   Remote `docker-compose up` CI environment
+    -   Remote `docker stack deploy` production environment
+    -   `docker-compose -f a.yml -f b.yml up`: Layering Compose files:
+        -   docker-compose.yml: base file
+        -   docker-compose.override.yml: override file, Docker Compose will read this file automatically
+        -   Examples:
+            -   CI deployment: `docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d`
+            -   Getting production config yml: `docker-compose -f docker-compose.ynl -f docker-compose.prd.yml config > output.yml`
