@@ -100,3 +100,5 @@ The CMD instruction has three forms:
 -   `echo "yourSecret" | docker secret create secret_name -`: Creating secrets from typing it out
 -   After *removing/updating* secrets, service containers will be re-created. It is part of the immutable design.
 -   Secrets and Stacks: version needs to be at least 3.1
+
+#### Full App Life Cycle with compose
