@@ -1,4 +1,4 @@
-# Hung's Docker / Kubernetes learning notes
+# Hung's Docker / Swarm / Kubernetes learning notes
 
 ## Quickest way to install Docker
 -   `curl -sSL https://get.docker.com/ | sh`: Docker's automated script to add their repository and install all dependencies
@@ -123,3 +123,39 @@ The CMD instruction has three forms:
 -   Swarm Updates in Stack Files:
     -   Same command. Just edit the YAML file, then `docker stack deploy -c file.yml <stackname>`
 -   `docker service update --force <servicename>`: Force update even if no changes require it
+
+#### Docker Healthchecks
+-   Healthcheck status shows up in `docker container ls`
+-   Check last 5 healthchecks with `docker container inspect`
+-   Docker run does nothing with healthchecks
+-   Services will replace tasks if they fail healthcheck
+-   Service updates wait for them before continuing
+-   Example command:
+    ```shell
+    docker run \
+        --health-cmd="curl -f localhost:9200/_cluster/health || false" \
+        --health-interval=5s \
+        --health-retries=3 \
+        --health-timeout=2s \
+        --health-start-period=15s \
+        elasticsearch:2
+    ```
+-   Example in Dockerfile - Nginx:
+    ```Dockerfile
+    FROM nginx:1.13
+
+    HEALTHCHECK --interval=30s --timeout=2s --interval=3s --retries=3 \
+        CMD curl -f http://localhost/ || exit 1
+    ```
+-   Example in Dockerfile - Postgres:
+    ```Dockerfile
+    FROM postgres
+
+    # specify real user with -U to prevent errors in logs
+
+    HEALTHCHECK --interval=5s --timeout=3s \
+        CMD pg_isready -U postgres || exit 1
+    ```
+
+#### Other notes
+-   When we do a `docker stack deploy` on an existing stack, it will deploy the changes as service updates.
