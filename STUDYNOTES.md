@@ -109,6 +109,17 @@ The CMD instruction has three forms:
     -   `docker-compose -f a.yml -f b.yml up`: Layering Compose files:
         -   docker-compose.yml: base file
         -   docker-compose.override.yml: override file, Docker Compose will read this file automatically
+        -   docker-compose.test.yml: test compose file for CI environment
+        -   docker-compose.prod.yml: compose file to bring into production
         -   Examples:
             -   CI deployment: `docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d`
             -   Getting production config yml: `docker-compose -f docker-compose.ynl -f docker-compose.prd.yml config > output.yml`
+    -   *Remember*: `docker compose` is only for local development, not production!
+
+#### Swarm Update Examples
+-   Just update the image used to a newer version: `docker service update --image myapp:1.2.1 <servicename>`
+-   Adding an environment variable and remove a port: `docker service update --env-add NODE_ENV=production --publish-rm 8080`
+-   Change number of replicas of two services: `docker service scale <servicename1>=8 <servicename2>=6`
+-   Swarm Updates in Stack Files:
+    -   Same command. Just edit the YAML file, then `docker stack deploy -c file.yml <stackname>`
+-   `docker service update --force <servicename>`: Force update even if no changes require it
