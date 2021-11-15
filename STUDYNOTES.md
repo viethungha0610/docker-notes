@@ -175,4 +175,66 @@ The CMD instruction has three forms:
     -   `docker image remove 127.0.0.1:5000/hello-world`
     -   `docker pull 127.0.0.1:5000/hello-world`
 -   Re-create registry using a bind mount and see how it stores data
-    -   `docker container run -d -p 5000:5000 --name registry -v $(pwd)/registry-data:/var/lib/registry registry
+    -   `docker container run -d -p 5000:5000 --name registry -v $(pwd)/registry-data:/var/lib/registry registry`
+-   Secure registry with TLS tutorial link: [Here](https://training.play-with-docker.com/linux-registry-part2/)
+
+## Going into production tips
+-   Focusing on Dockerfiles first! Those are your new *"build documentation"*
+    -   Make it start 
+    -   Make it log all things to stdout/stderr
+    -   Make it documented in file
+    -   Make it work for others
+    -   Make it lean
+    -   Make it scale
+-   OS Linux Distribution/Kernel Matters. Docker is very kernel and storage driver dependent.
+    -   Ubuntu is pretty safe choice
+-   A better alternative for solo-VM image is 1-node Swarm, which benefits from the extra features of Swarm.
+-   Don't turn cattle into pets
+    -   Assume nodes will be replaced
+    -   Assume containers will be recreated
+    -   Docker for (AWS/Azure) does this
+    -   I.e. don't make a single node "special" by installing stuff on it and doing everything from that node.
+-   Things to outsource, i.e. Not using open-source --> SaaS, potentially (trading free for convenience):
+    -   Image registry
+    -   Logs
+    -   Monitoring and alerting
+-   Pure open-source self-hosted tech stack
+    -   HW/OS: InfraKit / Terraform
+    -   Runtime: Docker
+    -   Orchestration: Docker Swarm
+    -   Networking: Docker Swarm
+    -   Storage: REX-Ray
+    -   CI/CD: Jenkins
+    -   Registry: Docker Distribution + Portus
+    -   Central Logging: ELK
+    -   Central Monitoring: Prometheus + Grafana
+    -   Swarm GUI: Portainer
+-   Docker for X: Cheap and Easy Tech Stack
+    -   HW/OS: Docker for AWS/Azure
+    -   Runtime: Docker
+    -   Orchestration: Docker Swarm
+    -   Networking: Docker Swarm
+    -   Storage: Docker for AWS/Azure
+    -   CI/CD: Codeship / TravisCI / Gitlab / CircleCI / Github Actions
+    -   Registry: Docker Hub / Quay
+    -   Layer 7 Proxy: Flow-Proxy / Traefik
+    -   Central Logging: Docker for AWS/Azure
+    -   Central Monitoring: Librato / Sysdig
+    -   Swarm GUI: Portainer
+-   Docker Enterprise Edition + Docker for X
+    -   HW/OS: Docker for AWS/Azure
+    -   Runtime: Docker EE
+    -   Orchestration: Docker Swarm
+    -   Networking: Docker Swarm
+    -   Storage: Docker for AWS/Azure
+    -   Storage: Docker for AWS/Azure
+    -   CI/CD: Codeship / TravisCI / Gitlab / CircleCI / Github Actions
+    -   Layer 7 Proxy: Docker EE (UCP)
+    -   Central Logging: Docker EE (DTR)
+    -   Central Logging: Docker for AWS/Azure
+    -   Central Monitoring: Librato / Sysdig
+    -   Swarm GUI: Docker EE (UCP)
+
+
+## Kubernetes
+-   It is a popular container orchestrator
