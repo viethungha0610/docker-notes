@@ -18,16 +18,16 @@
 -   By using the `docker exec -it <container> sh` (or bash) command on a container, we can connect to a shell from inside it.
 
 ## Container networking
-### Concepts
+## Concepts
 -   Create your apps so frontend/backend sit on same Docker network.
 -   Their inter-communication never leaves host
 -   All externally exposed prots closed by default
 
-#### DNS
+### DNS
 -   Containers shouldn't rely on IPs for inter-communication.
 -   DNS for friendly names is built-in if you use custom networks.
 
-### Commands
+## Commands
 -   `docker network ls` Show networks
 -   `docker network inspect` Inspect a network
 -   `docker network create --driver` Create a network
@@ -35,15 +35,15 @@
 -   `docker network disconnect` Detach a network from container
 
 ## Docker *Image*
-### Concepts
+## Concepts
 -   Images are made of file system changes and metadata
 -   Each layer is uniquely identified and only stored once on a host
 -   This saves storage space on host and transfer time on push/pull
 -   A container is just single read/write layer on top of image
 -   **tagging** is important, it identifies a specific commit/"version" of an image
 
-### Dockerfile
-#### Stanzas
+## Dockerfile
+### Stanzas
 -   The main purpose of a `CMD` is to provide defaults for an executing container.
 The CMD instruction has three forms:
 
@@ -51,10 +51,10 @@ The CMD instruction has three forms:
     -   `CMD ["param1","param2"]` (as default parameters to ENTRYPOINT)
     -   `CMD command param1 param2` (shell form)
 
-#### Building
+### Building
 -   Keeping the parts that change the least **AT THE TOP** of the Dockerfile, the parts that change the most **AT THE BOTTOM** of the Dockerfile.
 
-### Persistent data
+## Persistent data
 -   Docker has 2 main methods to persist data: **volumes** and **bind mounts**.
 -   **Volume**: e.g. `docker container run -d --name mysql MYSQL_ALLOW_EMPTY_PASSWORD=True -v mysql-db:/var/lib/mysql mysql`. Whereby `mysql-db` is the named volume.
 -   **Bind mounting**: 
@@ -63,13 +63,13 @@ The CMD instruction has three forms:
     -   E.g. `container run ... -v /user/hung/stuff:/path/container`
     -   Changes are updated **live!**. If a file is edited/added/removed from the host bind-mounted folder, the change will be reflected in the container! 
 
-### docker-compose
+## docker-compose
 
 -   Volumes: add `:ro` at the end of the volume path to specify "Read-only" e.g. `docker container run ... -v /local/path:/container/path:ro ...`
 -   **docker-compose** will automatically create a virtual network to include all the services.
 -   What you name the service under `services` will actually be the **DNS** on the Docker container private network!
 
-### Swarm
+## Swarm
 
 -   `docker swarm init` to enable initialise Swarm. Swarm is not activated out of the box for Docker.
 -   Key commands:
@@ -88,20 +88,20 @@ The CMD instruction has three forms:
     -   `docker node ls`: List out all the nodes.
     -   `docker swarm update ...`: Update certain characteristics of the Swarm environment.
 
-#### Stacks
+### Stacks
 -   Stacks are Production Grade Compose, accepting Compose files as their declarative definition for services, networks, and volumes.
 -   `docker stack deploy ...` command
 
 -   Version needs to be 3+
 
-#### Secrets
+### Secrets
 -   Secrets are applicable in Swarm only.
 -   `docker secret create secret_name secret_file`: Creating secrets from plain text files
 -   `echo "yourSecret" | docker secret create secret_name -`: Creating secrets from typing it out
 -   After *removing/updating* secrets, service containers will be re-created. It is part of the immutable design.
 -   Secrets and Stacks: version needs to be at least 3.1
 
-#### Full App Lifecycle With Compose
+### Full App Lifecycle With Compose
 -   Single set of Compose files for:
     -   Local `docker-compose up` development environment
     -   Remote `docker-compose up` CI environment
@@ -116,7 +116,7 @@ The CMD instruction has three forms:
             -   Getting production config yml: `docker-compose -f docker-compose.ynl -f docker-compose.prd.yml config > output.yml`
     -   *Remember*: `docker compose` is only for local development, not production!
 
-#### Swarm Update Examples
+### Swarm Update Examples
 -   Just update the image used to a newer version: `docker service update --image myapp:1.2.1 <servicename>`
 -   Adding an environment variable and remove a port: `docker service update --env-add NODE_ENV=production --publish-rm 8080`
 -   Change number of replicas of two services: `docker service scale <servicename1>=8 <servicename2>=6`
@@ -124,7 +124,7 @@ The CMD instruction has three forms:
     -   Same command. Just edit the YAML file, then `docker stack deploy -c file.yml <stackname>`
 -   `docker service update --force <servicename>`: Force update even if no changes require it
 
-#### Docker Healthchecks
+### Docker Healthchecks
 -   Healthcheck status shows up in `docker container ls`
 -   Check last 5 healthchecks with `docker container inspect`
 -   Docker run does nothing with healthchecks
@@ -157,5 +157,22 @@ The CMD instruction has three forms:
         CMD pg_isready -U postgres || exit 1
     ```
 
-#### Other notes
+### Other notes
 -   When we do a `docker stack deploy` on an existing stack, it will deploy the changes as service updates.
+
+## Docker Registry
+-   Private image registry for your network
+-   At its core: a web API and storage system, written in Go.
+-   Registry and Proper TLS: Docker won't talk to registry without HTTPS.
+
+### Key commands:
+-   `docker container run -d -p 5000:5000 --name registry registry`: Run the registry image.
+-   Re-tag an existing image and push it to your new registry:
+    -   `docker tag hello-world 127.0.0.1:5000/hello-world`
+    -   `docker push 127.0.0.1:5000/hello-world`
+-   Remove that image from local cache and pull it from new registry
+    -   `docker image remove hello-world`
+    -   `docker image remove 127.0.0.1:5000/hello-world`
+    -   `docker pull 127.0.0.1:5000/hello-world`
+-   Re-create registry using a bind mount and see how it stores data
+    -   `docker container run -d -p 5000:5000 --name registry -v $(pwd)/registry-data:/var/lib/registry registry
