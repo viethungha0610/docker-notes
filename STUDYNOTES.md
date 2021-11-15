@@ -1,4 +1,4 @@
-# Hung's Docker / Swarm / Kubernetes learning notes
+# Hùng's Docker / Swarm / Kubernetes learning notes
 
 ## Quickest way to install Docker
 -   `curl -sSL https://get.docker.com/ | sh`: Docker's automated script to add their repository and install all dependencies
