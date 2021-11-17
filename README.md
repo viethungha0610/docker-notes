@@ -238,3 +238,68 @@ The CMD instruction has three forms:
 
 ## Kubernetes
 -   It is a popular container orchestrator
+-   Rule of thumb to evaluate the benefit of orchestration:
+    -   **It is a function of number of servers + Change rate**
+
+### Kubernetes or Swarm?
+
+#### Swarm
+-   Swarm: **Easier** to deploy / manage
+-   Kubernetes: More features and flexibility
+-   Advantages of Swarm:
+    -   Comes with Docker, single vendor container platform
+    -   Easiest orchestrator to deploy/manage yourself
+    -   Follow 80/20 rule, 20% of features for 80% of use cases
+    -   Runs anyhwhere Docker does:
+        -   Local, cloud, datacenter
+        -   ARM, Windows, 32-bit
+-   Secure by default
+-   Easier to troubleshoot, fewer moving parts
+
+#### Kubernetes
+-   Clouds will deploy/manage Kubernetes for you
+-   Infrastructure vendors are making their down distributions
+-   Widest adoption and community
+-   Flexible: Covers widest set of use cases
+-   "Kubernetes first" vendor support
+-   "No one ever got fired for buying IBM"
+    -   Picking solutions isn't 100% rational
+    -   Trendy, will benefit your career
+    -   CIO/CTO Checkbox
+
+### Kubernetes basics
+-   **Number of nodes need to be odd to get consensus**
+-   Kubernetes: the whole orchestration system
+-   Kubectl ("cube control"): CLI to configure Kubernetes and manage apps
+-   Node: single server in the Kubernetes cluster
+-   Kubelet: Kubernetes agent running on nodes
+-   Control Plane: set of containers that manage the cluster
+    -   Includes API server, scheduler, controller manager, etcd (distributed storage system), and more
+    -   Sometimes called the "master"
+-   **Pod**: one or more containers running together on one Node
+    -   Basic unit of deployment. Containers are always in pods.
+-   **Controller**: for creating / updating pods and other objects.
+-   **Service**: network endpoint to connect to a pod.
+-   **Namespace**: Filtered group of objects in cluster
+-   **ReplicaSet**: its purpose is to maintain a stable set of replica Pods running at any given time.
+-   Secrets, ConfigMaps, and more
+
+### Basic commands (Kubernetes 1.14 -> 1.17)
+-   `kubectl run`: **changing to be only for pod creation.**
+-   `kubectl create`: create some resources in via CLI or YAML.
+-   `kubectl apply`: create/update anything via YAML.
+-   Two ways to deploy Pods (containers): Via commands, or via YAML
+
+### Scaling ReplicaSets examples
+-   `kubectl run my-apache --image httpd`
+-   `kubectl scale deploy/my-apache --replicas 2`
+    -   Equivalent: `kubectl scale deployment my-apache --replicas 2`
+
+### Inspecting Deployment Objects examples
+-   `kubectl get pods`
+-   `kubectl logs deployment/my-apache --follow --tail 1`
+    -   `--follow` checks for anything new that will come up
+    -   `--tail 1` is returning the last line
+-   Lookup the **Stern** tool for better log tailing
+-   `kubectl describe pod/my-apache-xxxx-yyyy`: get a bunch of details about an object, including events!
+-   **Rule of thumb**: modify the higher-level object for changes to be reflected in the lower level objects E.g. modifying Deployments and ReplicaSets to influence Pods.
