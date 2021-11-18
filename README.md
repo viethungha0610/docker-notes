@@ -236,7 +236,7 @@ The CMD instruction has three forms:
     -   Swarm GUI: Docker EE (UCP)
 
 
-## Kubernetes
+# Kubernetes
 -   It is a popular container orchestrator
 -   Rule of thumb to evaluate the benefit of orchestration:
     -   **It is a function of number of servers + Change rate**
@@ -303,3 +303,24 @@ The CMD instruction has three forms:
 -   Lookup the **Stern** tool for better log tailing
 -   `kubectl describe pod/my-apache-xxxx-yyyy`: get a bunch of details about an object, including events!
 -   **Rule of thumb**: modify the higher-level object for changes to be reflected in the lower level objects E.g. modifying Deployments and ReplicaSets to influence Pods.
+
+### Services
+-   Exposing containers via `kubectl expose`: creates a service for existing pods
+-   A **service** is a stable address for pod(s)
+-   If we want to connect to pod(s), we need a **service**
+-   CoreDNS allows us to resolve **services** by name
+
+#### Basic Service Types
+-   **ClusterIP**: only good **inside the cluster**
+    -   Single, internal virtual IP allocated
+-   **NodePort**:
+    -   High port allocated on each node
+    -   Port is open on every node's IP
+    -   Anyone can connect (if they can reach node)
+    -   Other pods need to be updated to this port
+-   **LoadBalancer**:
+    -   Controls a LB endpoint external to the cluster
+    -   Only relevant to inbound traffic
+-   **ExternalName**:
+    -   Is about allowing cluster talking to external services 
+-   `kubectl get service`: look up what IP was allocated
