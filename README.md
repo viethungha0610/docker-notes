@@ -309,6 +309,7 @@ The CMD instruction has three forms:
 -   A **service** is a stable address for pod(s)
 -   If we want to connect to pod(s), we need a **service**
 -   CoreDNS allows us to resolve **services** by name
+    -   E.g. if a service name is `mywebapp` with exposed 443 (HTTPS) and 8080 port --> `https://mywebapp:8080`
 
 #### Basic Service Types
 -   **ClusterIP**: only good **inside the cluster**
