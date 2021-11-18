@@ -315,13 +315,42 @@ The CMD instruction has three forms:
 -   **ClusterIP**: only good **inside the cluster**
     -   Single, internal virtual IP allocated
 -   **NodePort**:
+    -   **Open to the outside world**
     -   High port allocated on each node
     -   Port is open on every node's IP
     -   Anyone can connect (if they can reach node)
     -   Other pods need to be updated to this port
+    -   Example: `kubectl expose deployment/httpenv --port 8888 --name httpenv-np --type NodePort`
 -   **LoadBalancer**:
     -   Controls a LB endpoint external to the cluster
     -   Only relevant to inbound traffic
+    -   3 layers: LoadBalancer takes the packet and passes it to NodePort. NodePort then passes it to ClusterIP.
+    -   Example: `kubectl expose deployment/httpenv --port 8888 --name httpenv-lb --type LoadBalancer`
 -   **ExternalName**:
     -   Is about allowing cluster talking to external services 
 -   `kubectl get service`: look up what IP was allocated
+-   Services also have a fully qualified domain name (FQDN)
+    -   `curl <hostname>.<namespace>.svc.cluster.local`
+
+### Kubernetes Management Techniques
+-   `kubectl run` is and will only be for creating one-off tasks like creating a Pod.
+-   `kubectl run` is not recommended for production, only for simple dev/test or troubleshooting Pods.
+
+#### Generators   
+-   These are helper templates called **generators**
+-   Every resource in Kubernetes has a specification or "spec". Examples:
+    -   `kubectl create deployment sample --image nginx --dry-run -o yaml`
+        -   `--dry-run -o yaml` --> output template YAML
+    -   `kubectl expose deployment/test --port 80 --dry-run -o yaml`
+
+#### Management approaches
+-   **Imperative commands**: `run`, `expose`, `scale`, `edit`, `create deployment`
+-   **Imperative objects**: `create -f file.yml`, `replace -f file.yml`, ...
+-   **Declarative objects**: `apply -f file.yml`, or `dir\`, `diff`
+    -   Best for prod, easier to automate
+    -   Harder to understand and predict changes
+-   Most Important Rule:
+    -   **Don't mix the three approaches!**
+-   Move to `apply -f file.yml` and `apply -f directory\` for prod
+-   Store yaml in git, git commit each change before you apply
+-   This trains you for later doing GitOps (where git commits are automatically applied to clusters)
