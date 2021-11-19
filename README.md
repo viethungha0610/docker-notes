@@ -354,3 +354,103 @@ The CMD instruction has three forms:
 -   Move to `apply -f file.yml` and `apply -f directory\` for prod
 -   Store yaml in git, git commit each change before you apply
 -   This trains you for later doing GitOps (where git commits are automatically applied to clusters)
+
+### Declarative Kubernetes YAML
+-   Focus on the YAML or JSON file
+-   Create/update resources in a file: `kubectl apply -f filename.yml`
+-   Create/update a whole directory of yaml: `kubectl apply -f myyaml\`
+-   Create/update from a URL: `kubectl apply -f https://bret.run/pod.yml`
+    -   Be careful! Look at the file first!
+-   Each file contains one or more manifests
+-   Each manifest describes an API object (deployment, job, secret)
+-   Each manifest needs four parts (root key:values in the file)
+    -   `-   apiVersion:`
+    -   `-   kind:`
+    -   `-   metadata:`
+    -   `-   spec:`
+-   `kind`: getting a list of resources the cluster supports
+    -   `kubectl api-resources`
+-   `apiVersion`:
+    -   `kubectl api-versions`
+    -   Old api version with new cluster can result in some issues with deploying
+-   `metadata`: only name is required
+-   `spec`: the **most important** manifest, where all the action is at!
+
+#### Building the YAML spec
+-   `kubectl explain services --recursive`: getting all the keys each kind support
+-   Drilldown example:
+    -   `kubectl explain services.spec`
+    -   `kubectl explain services.spec.type`
+    -   `kubectl explain deployment.spec.template.spec.volumes.nfs.server`
+-   We can also suse docs --> Kubernetes API reference
+-   `kubectl diff -f app-yml`: visually showing the difference between the specs from latest (changed) YAML file and current specs on disk!
+-   `labels` goes under `metadata` in the YAML
+    -   Simple list of key: value for identifying your resource later by selecting, grouping, or filtering for it.
+    -   Common examples include:
+        -   tier: frontend
+        -   app: api
+        -   env: prod
+        -   customer: jpmc
+    -   Not meant to hold complex, large, or non-identifying info, which is what **annotations** are for
+    -   Filter a `get` command: `kubectl get pods -l app=nginx`
+    -   Apply only matching labels
+        -   `kubectl apply -f myfile.yaml -l app=nginx`
+    -   Label Selectors:
+        -   It is the **"glue"** telling Services and Deployments which pods are theirs
+            ```YAML
+            selector:
+            app: app-nginx
+            ```
+        -   Use Labels and Selectors to control which pods to go to which nodes.
+
+### Storage in Kubernetes
+-   **StatefulSets** is a new resource type, making Pods more sticky.
+-   Recommendation: avoid stateful workloads for first few deployments until you're good at the basics
+    -   Use db-as-a-service whenever you can.
+-   Volumes:
+    -   Tied to lifecycle of a Pod
+    -   All containers in a single Pod can share them
+-   PersistentVolumes:
+    -   Created at the cluster level, outlives a Pod
+    -   Separates storage config from Pod using it
+    -   Multiple Pods can share them
+-   CSI (Container Storage Inferface) plugins are the new way to connect to storage.
+
+### Ingress
+-   Definition: it is an API object that manages external access to the services in a cluster, typically HTTP.
+    -   Ingress may provide load balancing, SSL termination and name-based virtual hosting.
+-   How do we route outside connections based on hostname or URL?
+-   Ingress Controllers (optional) do this with 3rd party proxies
+-   Nginx is popular, but Traefik (Bret's favourite), HAProxy, F5, Envoy, Istio, etc.
+
+### CRD's and The Operator Pattern
+-   You can add 3rd party Resources and Controllers
+-   This extends Kubernetes API and CLI
+-   Pattern:
+    -   Operator: automate deployment and management of complex apps
+        -   E.g. databases, monitoring tools, backups, and custom ingresses.
+        -   These are in essence very complex YAML.
+
+### Higher Deployment Abstractions
+-   All our `kubectl` commands just talk to the Kubernetes API
+-   Kubernetes has limited built-in templating, versioning, tracking, and management of your apps 
+-   **Helm** is the most popular
+-   **Compose on Kubernetes** comes with Docker Desktop --> `stack deploy` can deploy Kubernetes instead of Swarm.
+    -   It is a lot simpler by using the Compose YAML, but it doesn't support everything that Kubernetes does. But again, use 80/20 rule.
+-   Most distros support **Helm**
+
+### Kubernetes Dashboard
+-   Default GUI for "upstream" Kubernetes: `github.com/kubernetes/dashboard`
+-   Other 3rd party options: (Rancher, Docker Ent, OpenShift)
+-   Safety first!
+    -   Put a proxy in front of it for authentication.
+
+### Kubectl Namespaces and Context
+-   Namespaces limit scope, aka "virtual clusters"
+-   Not related to Docker/Linux namespaces
+-   Won't need them in small clusters
+-   Example commands:
+    -   `kubectl get namespaces`
+    -   `kubectl get all --all-namespaces`
+-   See `~/kube/.config`
+    -   `kubectl config get-contexts`
