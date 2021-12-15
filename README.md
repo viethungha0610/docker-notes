@@ -454,3 +454,26 @@ The CMD instruction has three forms:
     -   `kubectl get all --all-namespaces`
 -   See `~/kube/.config`
     -   `kubectl config get-contexts`
+
+# Kubernetes notes
+## Kubernetes architecture
+-   Master and worder Nodes
+-   Master
+    -   etcd: the database for the cluster (A distributed, reliable key-value store for the most critical data of a distributed system)
+    -   Controller Manager
+    -   Scheduler
+    -   API Server: heart and soul of the cluster
+-   A Node
+    -   Physical infrastructure
+    -   OS
+    -   Container Runtime e.g. Docker, containerd, CRI-O, etc.
+    -   Containers
+    -   Kubelet: Kubernetes cluster's agent on the node, running the containers. Taking orders and talking back and forth with the API.
+    -   Kube-proxy: receives orders from the node agent and implementing network settings on the local machine.
+-   Overlay Network (Flannel/OpenVSwitch/Weave): connecting all Nodes and the Master
+-   Control Plane (consisting of one or more Master(s))
+
+## Pod
+-   A **Pod** is an abstraction of one or more containers --> The **lowest deployable** unit in Kubernetes. We don't touch containers directly in the Kubernetes context.
+    -   IP addresses are associated with pods, not with individual containers
+    -   Containers in a pod share `localhost`, and cna share volumes.
