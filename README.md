@@ -472,8 +472,62 @@ The CMD instruction has three forms:
     -   Kube-proxy: receives orders from the node agent and implementing network settings on the local machine.
 -   Overlay Network (Flannel/OpenVSwitch/Weave): connecting all Nodes and the Master
 -   Control Plane (consisting of one or more Master(s))
+-   CoreDNS
+-   <img src="kubernetes-architecture.png"/>
+
+## Kubernetes architecture - the nodes
+-   Runs a collection of services:
+    -   A container Engine (e.g. Docker)
+    -   Kubelet (the node agent)
+    -   kube-proxy (a necessary but not sufficient network component)
+
+## Ther control plane:
+-   Runs a collection of services:
+    -   The API server (our entrypoint to everything!)
+    -   Core services like the scheduler and controller manager
+    -   `etcd` (a highly available key/value store; the "database" of Kubernetes)
 
 ## Pod
 -   A **Pod** is an abstraction of one or more containers --> The **lowest deployable** unit in Kubernetes. We don't touch containers directly in the Kubernetes context.
     -   IP addresses are associated with pods, not with individual containers
-    -   Containers in a pod share `localhost`, and cna share volumes.
+    -   Containers in a pod share `localhost`, and can share volumes (containers in the same pod can communicate via localhost)
+
+## kubectl basics
+-   `~/.kube/config` or `--kubeconfig` flag to pass a config file
+-   Useful to get nodes report: `kubectl get nodes -o json | JQ ".items[] | {name:.metadata.name} + .status.capacity"`
+-   `kubectl describe node <node>`
+-   `kubectl explain type`
+-   Kubectl has different resource types
+-   What is a Namespace? `kubectl get namespaces`
+    -   Namespace allow us to segregate resources
+    -   See all pods in all namespaces `kubectl get pods --all-namespaces` or `kubectl get pods -A`
+    -   `kubectl get pods --namespace=kube-system` or `kubectl get pods -n kube-system`
+    -   We can use `-A`/`--all-namespaces` with most commands that manipulate multiple objects e.g.
+        -   `kubectl delete` can delete resources across multiple namespaces
+        -   `kubectl label` can add/remove/update labels across multiple namespaces
+    -   `kube-public` namespace is created by our installer & used for security bootstrapping. The only interesting object in `kube-public` is a ConfigMap named `cluster-info`
+-   Deployment (resource) -> ReplicaSet (resource) -> Pod (resource) -> Container
+-   A **deployment** is a high-level construct
+    -   Allows scaling, rolling updates, rollbacks
+    -   Multiple deployments can be used together to implement a **canary deployment**
+    -   Delegates pods mangement to <i>replica sets</i>
+-   A **replica** set is a low-level construct
+    -   Makes sure a given number of identical pods are running
+    -   Allows scaling
+    -   Rarely used directly
+-   Create a single pod with a custom command `kubectl run pingpong --image alpine --command -- ping 1.1.1.1`
+-   Create a deployment with custom command `kubectl create deployment pingpong --image alpine -- ping 1.1.1.1`
+-   `kubectl logs` can only follow 1 pod at a time
+-   `kubectl delete pod` terminates the pod gracefully (Sending it the TERM signal and waiting for it to shutdown)
+-   As soon as the pod is in "Terminating" state, the Replica Set replaces it
+-   But we can still see the output of the "Terminating" pod in `kubectl logs`
+-   Until 30s later, when the grace period expires
+-   The pod is then killed, and `kubectl logs` exits
+-   Scheduling cron jobs `kubectl create cronjob`
+    -   `kubectl create cronjob sleep --schedule="*/3 * * * *" --restart=OnFailure --image=alpine -- sleep 10`
+-   `kubectl scale deployment pingpong --replicas=8`
+-   `kubectl logs -l app=pingpong --tail 1 -f` --> We cannot follow too many concurrent pods
+    -   For each pod, the API server opens one extra connection to the corresponding kubelet.
+-   `stern` (`brew install stern`) is a good way to follow logs on Kubernetes logs.
+    -   **Important**: It could be dangerous to run a command like `stern .` since it could overload the API server if many pods are running.
+        -   `stern .` will stream the logs of all the pods in the current namespace, opening one connection for each container. If thousands of containers are running, this can put some stress on the API server!
