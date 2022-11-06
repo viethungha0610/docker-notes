@@ -531,3 +531,31 @@ The CMD instruction has three forms:
 -   `stern` (`brew install stern`) is a good way to follow logs on Kubernetes logs.
     -   **Important**: It could be dangerous to run a command like `stern .` since it could overload the API server if many pods are running.
         -   `stern .` will stream the logs of all the pods in the current namespace, opening one connection for each container. If thousands of containers are running, this can put some stress on the API server!
+-   Clean up deployment & cronjob: `kubectl delete deployment/pingpong cronjob/sleep`
+
+## K8s Services and Visualizing Deployments
+-   `kubectl expose` creates a service for existing pods
+-   A _service_ is a stable address for a pod (or a bunch of pods)
+-   If we want to connect to our pods, we needd to create a service
+-   Once a service is created, CoreDNS will allow us to resolve it by name
+-   Different types of services - ClusterIP, NodePort, LoadBalancer, ExternalName
+-   ClusterIP:
+    -   A virtual IP address is allocated for the service (in an internal, private range)
+    -   This IP address is reachable only from within the cluster (nodes and pods)
+    -   Our code can connect to the service using the original port number
+-   NodePort:
+    -   A port is allocated for the service (by default, in the 30000-32768 range)
+    -   That port is made available on **all our nodes** and anybody can connect to it
+    -   Our code must be change to connect to that new port number
+-   LoadBalancer:
+    -   An external load balancer is allocated for the service
+    -   The load balancer is configured accordingly
+-   ExternalName:
+    -   The DNS entry managed by CoreDNS will just be a CNAME to a provided record
+-   Services are layer 4 constructs
+    -   You can assign IP addresses to services, but they are still layer 4 (i.e. a service is not an IP address, it's an IP address + protocol + port)
+    -   This is caused by the current implementation of `kube-proxy`
+    -   As a result: you _have_ to indicate the port number for your service
+-   Example: ran shpod if not on Linux host so we can access internal ClusterIP
+    -   `kubectl apply -f https://bret.run/shpod.yml`
+    -   `kubectl attach --namespace=shpod -ti shpod`
