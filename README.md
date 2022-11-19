@@ -536,7 +536,7 @@ The CMD instruction has three forms:
 ## K8s Services and Visualizing Deployments
 -   `kubectl expose` creates a service for existing pods
 -   A _service_ is a stable address for a pod (or a bunch of pods)
--   If we want to connect to our pods, we needd to create a service
+-   If we want to connect to our pods, we **need** to create a service
 -   Once a service is created, CoreDNS will allow us to resolve it by name
 -   Different types of services - ClusterIP, NodePort, LoadBalancer, ExternalName
 -   ClusterIP:
@@ -559,3 +559,41 @@ The CMD instruction has three forms:
 -   Example: ran shpod if not on Linux host so we can access internal ClusterIP
     -   `kubectl apply -f https://bret.run/shpod.yml`
     -   `kubectl attach --namespace=shpod -ti shpod`
+-   Sometimes you don't need load-balancing and a single Service IP. In this case, you can create what are termed "headless" Services, by explicitly specifying "None" for the cluster IP (.spec.clusterIP).
+-   Services and endpoints:
+    -   A service has a number of "endpoints"
+    -   Each endpoint is a host + port where the service is available
+    -   The endpoints are maintained and updated automatically by Kubernetes
+    -   The default type (ClusterIP) only works for internal traffic
+    -   If we want to accept external traffic, we can use one of these:
+        -   NodePort (expose a service on a TCP port between 30000-32768)
+        -   LoadBalancer (provision a cloud balancer for our service)
+        -   ExternalIP (use one node's external IP address)
+        -   Ingress (a special mechanism for HTTP services)
+
+## Kubernetes network model
+-   TLDR: Our cluster (nodes and pods) is one big flat IP network.
+    -   All nodes must be able to reach each other, without NAT
+    -   All pods must be able to reach each other, without NAT
+    -   Pods and nodes msut be able to reach each other, without NAT
+    -   Each pod is aware of its IP address (no NAT)
+    -   Pod IP addresses are assigned by the network implementation
+-   Container Network Interface (CNI):
+    -   Most Kubernetes clusters use CNI "plugins" to implement networking
+    -   When a pod is created, Kubernetes delegates the network setup to these plugins
+    -   Typically, CNI plugins will:
+        -   Allocate an IP address (by calling an IPAM plugin)
+        -   Add a network interface into pod's network namespace
+        -   Configure the interface as well as required routes, etc.
+    -   Multiple moving parts:
+        -   Pod-to-pod network:
+            -   Provides comms between pods and nodes
+            -   Is generally implemented with CNI plugins
+        -   Pod-to-service network:
+            -   Provides itnernal communication and load balancing
+            -   Is generally implemented with kube-proxy (or maybe kube-router)
+        -   Network policies:
+            -   Provides firewalling and isolation between pods
+            -   Can be bundled with the "pod network" or provided by another component
+    -   Command to get the cluster IP of a service:
+        -   E.g. `RNG=$(kubectl get svc rng -o go-template={{.spec.clusterIP}})` - service called `rng`
