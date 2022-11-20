@@ -597,3 +597,36 @@ The CMD instruction has three forms:
             -   Can be bundled with the "pod network" or provided by another component
     -   Command to get the cluster IP of a service:
         -   E.g. `RNG=$(kubectl get svc rng -o go-template={{.spec.clusterIP}})` - service called `rng`
+
+## The Kubernetes Dashboard
+-   Cluster dashboard is available officially
+
+## Daemon sets (`DeamonSet`)
+-   Use if we want a deployment for each nodes, evenly distributed
+-   Great for cluster-wide, per-node processes:
+    -   kube-proxy
+    -   CNI network plugins
+    -   monitoring agents
+    -   hardware mgmt tools
+    -   etc.
+-   Labels
+    -   Labels are key/value pairs that are attached to objects, such as pods. Labels are intended to be used to specify identifying attributes of objects that are meaningful and relevant to users, but do not directly imply semantics to the core system.
+    -   We can use selectors with many `kubectl` commands.
+        -   `kubectl get pods -l app=rng`
+        -   `kubectl get pods --selector app=rng`
+-   Replica sets have a more specific selector, visible with `kubectl describe`
+    -   E.g. `app=rng,pod-template-hash=abcd1234`
+-   Daemon sets alhave a more specific selector, but it's invisible.
+    -   E.g. `app=rng,controller-revision-hash=abcd1234`
+-   As a result, each controller only "sees" the pods it manages.
+-   Selectors:
+    -   Unlike names and UIDs, labels do not provide uniqueness. In general, we expect many objects to carry the same label(s).
+    -   Via a label selector, the client/user can identify a set of objects. The label selector is the core grouping primitive in Kubernetes.
+-   Reminder: a daemon set is a resource that creates more resources!
+-   Labels and debugging
+    -   When a pod is misbehaving, we can delete it: another one will be re-created
+    -   But we can also change its labels
+    -   It will be removed from the load balancer (it won't receive traffic anymore)
+    -   Another pod will be recreated immediately 
+    -   But the problematic pod is still here, and we can inspect and debug it
+    -   We can even re-add it to the rotation if necessary (very useful to troubleshoot intermittent and elusive bugs)
