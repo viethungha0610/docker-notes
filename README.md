@@ -630,3 +630,91 @@ The CMD instruction has three forms:
     -   Another pod will be recreated immediately 
     -   But the problematic pod is still here, and we can inspect and debug it
     -   We can even re-add it to the rotation if necessary (very useful to troubleshoot intermittent and elusive bugs)
+
+## Kubernetes YAML
+-   4 key manifests
+    -   apiVersion
+    -   kind
+    -   metadata
+    -   spec
+    -   E.g. Pod
+        ```YAML
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: nginx
+        spec:
+          containers:
+          - name: nginx
+            image: nginx:1.17.3
+        ```
+    -   We can use `-o yaml --dry-run` option combo with `run` and `create` to create the YAML only
+    -   Server dry run: Kubernetes does all the calculations and planning, except writing to etcd
+        ```YAML
+        apiVersion: apps/v1
+        kind: DaemonSet
+        metadata:
+        annotations:
+            deprecated.daemonset.template.generation: "1"
+            kubectl.kubernetes.io/last-applied-configuration: |
+            {"apiVersion":"apps/v1","kind":"DaemonSet","metadata":{"annotations":{},"creationTimestamp":"2022-11-24T20:16:03Z","generation":1,"labels":{"app":"web"},"name":"web","namespace":"default","resourceVersion":"216161","uid":"f8f16a98-2d99-4761-a870-ab2a15bc82e4"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app":"web"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"creationTimestamp":null,"labels":{"app":"web"}},"spec":{"containers":[{"image":"nginx","imagePullPolicy":"Always","name":"nginx","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File"}],"dnsPolicy":"ClusterFirst","restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"terminationGracePeriodSeconds":30}}},"status":{}}
+        creationTimestamp: "2022-11-24T20:18:24Z"
+        generation: 1
+        labels:
+            app: web
+        name: web
+        namespace: default
+        uid: c593d890-c6c3-444a-afa7-0a572e6b1e47
+        spec:
+        revisionHistoryLimit: 10
+        selector:
+            matchLabels:
+            app: web
+        template:
+            metadata:
+            creationTimestamp: null
+            labels:
+                app: web
+            spec:
+            containers:
+            - image: nginx
+                imagePullPolicy: Always
+                name: nginx
+                resources: {}
+                terminationMessagePath: /dev/termination-log
+                terminationMessagePolicy: File
+            dnsPolicy: ClusterFirst
+            restartPolicy: Always
+            schedulerName: default-scheduler
+            securityContext: {}
+            terminationGracePeriodSeconds: 30
+        updateStrategy:
+            rollingUpdate:
+            maxSurge: 0
+            maxUnavailable: 1
+            type: RollingUpdate
+        status:
+        currentNumberScheduled: 0
+        desiredNumberScheduled: 0
+        numberMisscheduled: 0
+        numberReady: 0
+        ```
+    -   Advantages of server-side dry run
+        -   The YAML is verified much more extensively
+        -   The only step that is skipped is "write to etcd"
+        -   YAML that passes server-side dry run should apply successfully (unless the cluster state changes by the time the YAML is actually applied)
+        -   Validating or mutating hooks that have side effects can also be an issue
+    -   `kubectl diff` does a server-side dry run, and show differences
+
+## Rolling updates
+-   2 parameters determin the pace of the rollout: `maxUnavailable` and `maxSurge`
+-   e.g. `kubectl get deploy -o json | jq  ".items[] | {name:.metadata.name} + .spec.strategy.rollingUpdate"`
+-   We can do rolling updates with `deployments`, `daemonsets`, `statefulsets`
+-   Editing one of these resources will automatically result in a rolling update
+-   Rolling updates can be monitoroed with the `kubectl rollout` subcommand
+-   Kubernetes sends a "polite" shutdown request to the worker, which ignores it
+-   After a grace period, Kubernetes gets impatient and kills the container 
+    -   The grace period is 30 seconds, but can be changed if needed
+-   Recovering from a bad rollout
+    -   `kubectl rollout undo deploy worker`
+    -   `kubectl rollout status deploy worker`
